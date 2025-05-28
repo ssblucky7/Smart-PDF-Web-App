@@ -5,6 +5,7 @@ A web application that allows users to upload PDF files, extract text content, i
 ## Features
 
 - **PDF Upload**: Upload PDF documents to extract text content
+- **PDF Preview**: View the original PDF document directly in the browser
 - **Text Extraction**: Extract text from PDFs using PyPDF2 with OCR fallback using pytesseract
 - **Read Aloud**: Listen to the extracted text using browser's speech synthesis
 - **Chat Interface**: Ask questions about the PDF content and get AI-powered responses
@@ -63,14 +64,15 @@ A web application that allows users to upload PDF files, extract text content, i
    http://127.0.0.1:5000
    ```
 
-3. Upload a PDF file, view the extracted text, and interact with the chatbot.
+3. Upload a PDF file, view the PDF preview, see the extracted text, and interact with the chatbot.
 
 ## How It Works
 
 1. **PDF Upload**: User uploads a PDF file which is processed on the server
-2. **Text Extraction**: The app attempts to extract text directly using PyPDF2, with OCR fallback using pytesseract
-3. **Chat Functionality**: User questions are processed against the extracted text using the GPT-4o model
-4. **Read Aloud**: The browser's built-in speech synthesis API reads the extracted text
+2. **PDF Preview**: The original PDF is displayed in an embedded viewer
+3. **Text Extraction**: The app attempts to extract text directly using PyPDF2, with OCR fallback using pytesseract
+4. **Chat Functionality**: User questions are processed against the extracted text using the GPT-4o model
+5. **Read Aloud**: The browser's built-in speech synthesis API reads the extracted text
 
 ## Limitations
 

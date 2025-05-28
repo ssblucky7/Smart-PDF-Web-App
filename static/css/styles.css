@@ -190,3 +190,20 @@ button:disabled {
 #chatOutput strong {
     color: #4b5563;
 }
+
+/* PDF Preview Styles */
+.pdf-preview-container {
+    margin-bottom: 1.5rem;
+}
+
+.pdf-preview {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+#pdfViewer {
+    border: none;
+    width: 100%;
+}

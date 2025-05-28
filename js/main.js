@@ -6,8 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chatInput');
     const sendChatBtn = document.getElementById('sendChat');
     const chatOutput = document.getElementById('chatOutput');
+    const pdfViewer = document.getElementById('pdfViewer');
+    const pdfPreviewContainer = document.querySelector('.pdf-preview-container');
     let extractedText = '';
     let speech = null;
+    let currentPdfFilename = '';
 
     // PDF Upload
     pdfInput.addEventListener('change', async () => {
@@ -27,8 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             extractedText = result.text;
+            currentPdfFilename = result.filename;
             textOutput.textContent = extractedText;
             readAloudBtn.disabled = false;
+            
+            // Display PDF in the viewer
+            pdfViewer.src = `/uploads/${currentPdfFilename}`;
+            pdfPreviewContainer.classList.remove('hidden');
         } catch (error) {
             alert('Error uploading PDF: ' + error.message);
         }

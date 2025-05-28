@@ -56,6 +56,10 @@ def index():
 def serve_js(filename):
     return send_from_directory('js', filename)
 
+@app.route('/uploads/<path:filename>')
+def serve_pdf(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 @app.route('/upload', methods=['POST'])
 def upload_pdf():
     if 'file' not in request.files:
@@ -68,7 +72,7 @@ def upload_pdf():
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
         text = extract_text_from_pdf(file_path)
-        return jsonify({'text': text})
+        return jsonify({'text': text, 'filename': filename})
     return jsonify({'error': 'Invalid file type'}), 400
 
 @app.route('/chat', methods=['POST'])
