@@ -8,6 +8,8 @@ from pdf2image import convert_from_path
 import requests
 import json
 import sys
+import glob
+import time
 
 # Add user site-packages to path to find openai module
 import site
@@ -20,8 +22,24 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# Dictionary to track session files
+session_files = {}
+
 load_dotenv()
 AIMLAPI_KEY = os.getenv('AIMLAPI_KEY')
+
+# Periodic cleanup function to remove old files (can be called by a scheduler)
+def cleanup_old_files():
+    # Remove files older than 1 hour
+    cutoff_time = time.time() - 3600
+    
+    for filename in os.listdir(app.config['UPLOAD_FOLDER']):
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        try:
+            if os.path.isfile(file_path) and os.path.getmtime(file_path) < cutoff_time:
+                os.remove(file_path)
+        except Exception as e:
+            print(f"Error during cleanup: {str(e)}")
 
 def extract_text_from_pdf(pdf_path):
     try:
@@ -48,6 +66,14 @@ def extract_text_from_pdf(pdf_path):
     except Exception as e:
         return f"Error during OCR: {str(e)}"
 
+def extract_text_from_image(image_path):
+    try:
+        # Use OCR to extract text from the image
+        text = pytesseract.image_to_string(image_path)
+        return text
+    except Exception as e:
+        return f"Error during OCR: {str(e)}"
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -57,23 +83,63 @@ def serve_js(filename):
     return send_from_directory('js', filename)
 
 @app.route('/uploads/<path:filename>')
-def serve_pdf(filename):
+def serve_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/upload', methods=['POST'])
-def upload_pdf():
+def upload_file():
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
-    if file and file.filename.lower().endswith('.pdf'):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
+    
+    # Get session ID from the request
+    session_id = request.form.get('sessionId', 'default')
+    
+    # Create a unique filename with session ID to avoid conflicts
+    original_filename = secure_filename(file.filename)
+    filename = f"{session_id}_{int(time.time())}_{original_filename}"
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(file_path)
+    
+    # Track this file with the session
+    if session_id not in session_files:
+        session_files[session_id] = []
+    session_files[session_id].append(file_path)
+    
+    # Check if the file is a PDF
+    if original_filename.lower().endswith('.pdf'):
         text = extract_text_from_pdf(file_path)
-        return jsonify({'text': text, 'filename': filename})
-    return jsonify({'error': 'Invalid file type'}), 400
+        return jsonify({'text': text, 'filename': filename, 'isImage': False})
+    # Check if the file is an image
+    elif any(original_filename.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']):
+        text = extract_text_from_image(file_path)
+        return jsonify({'text': text, 'filename': filename, 'isImage': True})
+    else:
+        # Remove the file if it's not a supported type
+        os.remove(file_path)
+        session_files[session_id].remove(file_path)
+        return jsonify({'error': 'Invalid file type. Please upload a PDF or image file.'}), 400
+
+@app.route('/cleanup', methods=['POST'])
+def cleanup_files():
+    data = request.get_json()
+    session_id = data.get('sessionId')
+    
+    if session_id and session_id in session_files:
+        # Delete all files associated with this session
+        for file_path in session_files[session_id]:
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception as e:
+                print(f"Error deleting file {file_path}: {str(e)}")
+        
+        # Clear the session files list
+        session_files.pop(session_id, None)
+    
+    return jsonify({'success': True})
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -134,4 +200,6 @@ def chat():
         return jsonify({'answer': answer})
 
 if __name__ == '__main__':
+    # Clean up any existing files before starting
+    cleanup_old_files()
     app.run(debug=True)

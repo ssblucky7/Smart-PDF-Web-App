@@ -7,17 +7,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendChatBtn = document.getElementById('sendChat');
     const chatOutput = document.getElementById('chatOutput');
     const pdfViewer = document.getElementById('pdfViewer');
+    const imageViewer = document.getElementById('imageViewer');
     const pdfPreviewContainer = document.querySelector('.pdf-preview-container');
     let extractedText = '';
     let speech = null;
-    let currentPdfFilename = '';
+    let currentFilename = '';
+    let isImage = false;
+    
+    // Generate a unique session ID
+    const sessionId = Date.now().toString() + Math.random().toString(36).substring(2, 15);
 
-    // PDF Upload
+    // File Upload (PDF or Image)
     pdfInput.addEventListener('change', async () => {
         const file = pdfInput.files[0];
         if (!file) return;
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('sessionId', sessionId);
         
         try {
             const response = await fetch('/upload', {
@@ -30,15 +36,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             extractedText = result.text;
-            currentPdfFilename = result.filename;
+            currentFilename = result.filename;
             textOutput.textContent = extractedText;
             readAloudBtn.disabled = false;
             
-            // Display PDF in the viewer
-            pdfViewer.src = `/uploads/${currentPdfFilename}`;
+            // Determine if file is an image or PDF
+            isImage = result.isImage;
+            
+            if (isImage) {
+                // Display image in the viewer
+                imageViewer.src = `/uploads/${currentFilename}`;
+                imageViewer.classList.remove('hidden');
+                pdfViewer.classList.add('hidden');
+            } else {
+                // Display PDF in the viewer
+                pdfViewer.src = `/uploads/${currentFilename}`;
+                pdfViewer.classList.remove('hidden');
+                imageViewer.classList.add('hidden');
+            }
+            
             pdfPreviewContainer.classList.remove('hidden');
         } catch (error) {
-            alert('Error uploading PDF: ' + error.message);
+            alert('Error uploading file: ' + error.message);
         }
     });
 
@@ -101,5 +120,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendChatBtn.click();
+    });
+    
+    // Clean up files when page is unloaded or refreshed
+    window.addEventListener('beforeunload', async () => {
+        if (currentFilename) {
+            try {
+                await fetch('/cleanup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: sessionId }),
+                    // Use keepalive to ensure the request completes even if the page is closing
+                    keepalive: true
+                });
+            } catch (error) {
+                // Cannot handle errors during page unload
+                console.error('Error during cleanup:', error);
+            }
+        }
     });
 });
