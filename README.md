@@ -16,7 +16,7 @@ A web application that allows users to upload PDF files, extract text content, i
 - **Frontend**: HTML, CSS, JavaScript
 - **Backend**: Flask (Python)
 - **PDF Processing**: PyPDF2, pdf2image, pytesseract
-- **AI Integration**: OpenAI API (GPT-4o) with local fallback processing
+- **AI Integration**: Google Gemini API (Gemini 2.0 Flash) with local fallback processing
 
 ## Requirements
 
@@ -35,7 +35,7 @@ The following Python packages are required and will be installed via `requiremen
 - **pytesseract==0.3.13**: Python wrapper for Tesseract OCR engine, used for extracting text from images and scanned PDFs
 - **pdf2image==1.17.0**: Converts PDF pages to images, enabling OCR processing when direct text extraction fails
 - **requests==2.32.3**: HTTP library for making API calls to external services (AI chat functionality)
-- **openai==1.82.0**: Official OpenAI Python client for integrating GPT-4o AI chat capabilities
+
 - **Pillow==11.2.1**: Python Imaging Library for image processing and manipulation, required by pytesseract and pdf2image
 
 ## Installation
@@ -63,7 +63,7 @@ The following Python packages are required and will be installed via `requiremen
 
 5. Create a `.env` file in the project root with your API key:
    ```
-   AIMLAPI_KEY=your_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
    ```
 
 ## Usage
@@ -85,7 +85,7 @@ The following Python packages are required and will be installed via `requiremen
 1. **PDF Upload**: User uploads a PDF file which is processed on the server
 2. **PDF Preview**: The original PDF is displayed in an embedded viewer
 3. **Text Extraction**: The app attempts to extract text directly using PyPDF2, with OCR fallback using pytesseract
-4. **Chat Functionality**: User questions are processed against the extracted text using the GPT-4o model
+4. **Chat Functionality**: User questions are processed against the extracted text using the Gemini 2.0 Flash model
 5. **Read Aloud**: The browser's built-in speech synthesis API reads the extracted text
 
 ## Limitations
