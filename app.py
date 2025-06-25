@@ -15,7 +15,7 @@ import time
 import site
 sys.path.append(site.getusersitepackages())
 
-from openai import OpenAI
+
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -26,7 +26,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 session_files = {}
 
 load_dotenv()
-AIMLAPI_KEY = os.getenv('AIMLAPI_KEY')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Periodic cleanup function to remove old files (can be called by a scheduler)
 def cleanup_old_files():
@@ -150,21 +150,26 @@ def chat():
         return jsonify({'error': 'Query and context required'}), 400
 
     try:
-        client = OpenAI(
-            base_url="https://api.aimlapi.com/v1",
-            api_key=AIMLAPI_KEY,
+        payload = {
+            "contents": [{
+                "parts": [{
+                    "text": f"You are a helpful assistant that answers questions based on provided PDF content.\n\nContext: {context}\n\nQuestion: {query}"
+                }]
+            }]
+        }
+        
+        response = requests.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}",
+            headers={'Content-Type': 'application/json'},
+            json=payload
         )
         
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that answers questions based on provided PDF content."},
-                {"role": "user", "content": f"Context: {context}\n\nQuestion: {query}"}
-            ]
-        )
-        
-        answer = response.choices[0].message.content
-        return jsonify({'answer': answer})
+        if response.status_code == 200:
+            result = response.json()
+            answer = result['candidates'][0]['content']['parts'][0]['text']
+            return jsonify({'answer': answer})
+        else:
+            raise Exception(f"API request failed with status {response.status_code}")
     except Exception as e:
         # Fallback to local processing if API fails
         print(f"API error: {str(e)}")
