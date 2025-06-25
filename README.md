@@ -24,6 +24,20 @@ A web application that allows users to upload PDF files, extract text content, i
 - Tesseract OCR (for OCR functionality)
 - Poppler (for pdf2image functionality)
 
+## Python Dependencies
+
+The following Python packages are required and will be installed via `requirements.txt`:
+
+- **Flask==3.1.1**: Web framework for creating the web application server and handling HTTP requests/responses
+- **Werkzeug==3.1.3**: WSGI utility library that Flask depends on, provides secure filename handling and request processing
+- **python-dotenv==1.1.0**: Loads environment variables from `.env` file to manage API keys and configuration securely
+- **PyPDF2==3.0.1**: Primary PDF processing library for extracting text directly from PDF documents
+- **pytesseract==0.3.13**: Python wrapper for Tesseract OCR engine, used for extracting text from images and scanned PDFs
+- **pdf2image==1.17.0**: Converts PDF pages to images, enabling OCR processing when direct text extraction fails
+- **requests==2.32.3**: HTTP library for making API calls to external services (AI chat functionality)
+- **openai==1.82.0**: Official OpenAI Python client for integrating GPT-4o AI chat capabilities
+- **Pillow==11.2.1**: Python Imaging Library for image processing and manipulation, required by pytesseract and pdf2image
+
 ## Installation
 
 1. Clone the repository:
