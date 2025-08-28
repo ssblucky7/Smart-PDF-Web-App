@@ -190,3 +190,15 @@ Body needs to provide a inputs key, received: b'{"question":"python app.py","con
 2025-08-28 16:35:55,537 - __main__ - INFO - Request: GET serve_js - IP: 127.0.0.1
 2025-08-28 16:35:55,557 - __main__ - INFO - Response: 304 - GET serve_js
 2025-08-28 16:35:55,568 - werkzeug - INFO - 127.0.0.1 - - [28/Aug/2025 16:35:55] "[36mGET /js/main.js HTTP/1.1[0m" 304 -
+2025-08-28 16:36:01,306 - __main__ - INFO - Request: GET index - IP: 127.0.0.1
+2025-08-28 16:36:01,310 - __main__ - INFO - Response: 200 - GET index
+2025-08-28 16:36:01,312 - __main__ - INFO - Request: POST cleanup_files - IP: 127.0.0.1
+2025-08-28 16:36:01,314 - werkzeug - INFO - 127.0.0.1 - - [28/Aug/2025 16:36:01] "GET / HTTP/1.1" 200 -
+2025-08-28 16:36:01,315 - __main__ - INFO - Response: 200 - POST cleanup_files
+2025-08-28 16:36:01,324 - werkzeug - INFO - 127.0.0.1 - - [28/Aug/2025 16:36:01] "POST /cleanup HTTP/1.1" 200 -
+2025-08-28 16:36:01,465 - __main__ - INFO - Request: GET static - IP: 127.0.0.1
+2025-08-28 16:36:01,484 - __main__ - INFO - Request: GET serve_js - IP: 127.0.0.1
+2025-08-28 16:36:01,491 - __main__ - INFO - Response: 304 - GET static
+2025-08-28 16:36:01,492 - __main__ - INFO - Response: 304 - GET serve_js
+2025-08-28 16:36:01,493 - werkzeug - INFO - 127.0.0.1 - - [28/Aug/2025 16:36:01] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+2025-08-28 16:36:01,495 - werkzeug - INFO - 127.0.0.1 - - [28/Aug/2025 16:36:01] "[36mGET /js/main.js HTTP/1.1[0m" 304 -
