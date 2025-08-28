@@ -327,4 +327,4 @@ For support, please:
 
 ---
 
-**Built with ❤️ for intelligent document processing**
+**S.S.B Lucky 7**
