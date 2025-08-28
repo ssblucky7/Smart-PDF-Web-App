@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const pdfViewer = document.getElementById('pdfViewer');
     const imageViewer = document.getElementById('imageViewer');
     const pdfPreviewContainer = document.querySelector('.pdf-preview-container');
+    
+    // Validate DOM elements
+    if (!pdfInput || !textOutput || !readAloudBtn || !stopReadBtn || !chatInput || !sendChatBtn || !chatOutput) {
+        console.error('Required DOM elements not found');
+        return;
+    }
+    
     let extractedText = '';
     let speech = null;
     let currentFilename = '';
@@ -17,10 +24,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Generate a unique session ID
     const sessionId = Date.now().toString() + Math.random().toString(36).substring(2, 15);
 
-    // File Upload (PDF or Image)
+    // HTML escape function
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // File Upload
     pdfInput.addEventListener('change', async () => {
         const file = pdfInput.files[0];
         if (!file) return;
+        
         const formData = new FormData();
         formData.append('file', file);
         formData.append('sessionId', sessionId);
@@ -31,33 +46,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData
             });
             const result = await response.json();
+            
             if (result.error) {
-                alert(result.error);
+                showError(result.error);
                 return;
             }
+            
             extractedText = result.text;
             currentFilename = result.filename;
             textOutput.textContent = extractedText;
             readAloudBtn.disabled = false;
             
-            // Determine if file is an image or PDF
             isImage = result.isImage;
             
             if (isImage) {
-                // Display image in the viewer
                 imageViewer.src = `/uploads/${currentFilename}`;
                 imageViewer.classList.remove('hidden');
                 pdfViewer.classList.add('hidden');
             } else {
-                // Display PDF in the viewer
                 pdfViewer.src = `/uploads/${currentFilename}`;
                 pdfViewer.classList.remove('hidden');
                 imageViewer.classList.add('hidden');
             }
             
-            pdfPreviewContainer.classList.remove('hidden');
+            if (pdfPreviewContainer) {
+                pdfPreviewContainer.classList.remove('hidden');
+            }
         } catch (error) {
-            alert('Error uploading file: ' + error.message);
+            showError('Error uploading file: ' + error.message);
         }
     });
 
@@ -85,36 +101,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Chatbot
+    // Q&A System
     sendChatBtn.addEventListener('click', async () => {
         const query = chatInput.value.trim();
         if (!query || !extractedText) return;
         
         try {
-            chatOutput.innerHTML += `<p><strong>You:</strong> ${query}</p>`;
-            chatOutput.innerHTML += `<p><strong>AI:</strong> <em>Thinking...</em></p>`;
-            chatOutput.scrollTop = chatOutput.scrollHeight;
+            // Sanitize and display user input
+            const escapedQuery = escapeHtml(query);
+            addChatMessage('You', escapedQuery);
+            addChatMessage('AI', '<em>Processing...</em>');
             
             const response = await fetch('/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query, context: extractedText })
+                body: JSON.stringify({ query, sessionId: sessionId })
             });
             const result = await response.json();
             
-            // Remove the "thinking" message
-            chatOutput.innerHTML = chatOutput.innerHTML.replace('<p><strong>AI:</strong> <em>Thinking...</em></p>', '');
+            // Remove processing message
+            removeLastMessage();
             
             if (result.error) {
-                chatOutput.innerHTML += `<p class="text-red-500">Error: ${result.error}</p>`;
+                addChatMessage('AI', `<span class="text-red-500">Error: ${escapeHtml(result.error)}</span>`);
                 return;
             }
-            chatOutput.innerHTML += `<p><strong>AI:</strong> ${result.answer}</p>`;
+            
+            // Add answer with speak button
+            const answerHtml = `${result.answer} <button onclick="speakText('${result.answer.replace(/'/g, "\\'")}')" class="speak-btn">🔊</button>`;
+            addChatMessage('AI', answerHtml);
             chatInput.value = '';
-            chatOutput.scrollTop = chatOutput.scrollHeight;
+            
         } catch (error) {
-            chatOutput.innerHTML = chatOutput.innerHTML.replace('<p><strong>AI:</strong> <em>Thinking...</em></p>', '');
-            chatOutput.innerHTML += `<p class="text-red-500">Error: ${error.message}</p>`;
+            removeLastMessage();
+            addChatMessage('AI', `<span class="text-red-500">Error: ${escapeHtml(error.message)}</span>`);
         }
     });
 
@@ -122,7 +142,42 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') sendChatBtn.click();
     });
     
-    // Clean up files when page is unloaded or refreshed
+    // Helper functions
+    function addChatMessage(sender, message) {
+        const messageElement = document.createElement('p');
+        messageElement.innerHTML = `<strong>${escapeHtml(sender)}:</strong> ${message}`;
+        chatOutput.appendChild(messageElement);
+        chatOutput.scrollTop = chatOutput.scrollHeight;
+    }
+    
+    function removeLastMessage() {
+        const lastMessage = chatOutput.lastElementChild;
+        if (lastMessage) {
+            chatOutput.removeChild(lastMessage);
+        }
+    }
+    
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        errorDiv.style.cssText = 'background: #fee; color: #c33; padding: 10px; margin: 10px 0; border-radius: 4px;';
+        document.body.insertBefore(errorDiv, document.body.firstChild);
+        setTimeout(() => errorDiv.remove(), 5000);
+    }
+    
+    // Global function for speaking chat responses
+    window.speakText = function(text) {
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+        }
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 1;
+        window.speechSynthesis.speak(utterance);
+    };
+    
+    // Clean up files when page is unloaded
     window.addEventListener('beforeunload', async () => {
         if (currentFilename) {
             try {
@@ -130,11 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ sessionId: sessionId }),
-                    // Use keepalive to ensure the request completes even if the page is closing
                     keepalive: true
                 });
             } catch (error) {
-                // Cannot handle errors during page unload
                 console.error('Error during cleanup:', error);
             }
         }
