@@ -1,3 +1,9 @@
+# Team Member
+**Suresh Mahato**
+**Sastika Regmi**
+**Nischal Shrestha**
+
+
 # Smart PDF Q&A System
 
 🚀 **Production-Ready AI-Powered Document Intelligence Platform**
