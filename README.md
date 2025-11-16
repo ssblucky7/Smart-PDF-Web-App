@@ -1,7 +1,7 @@
 # Team Member
-**Suresh Mahato**
-**Sastika Regmi**
-**Nischal Shrestha**
+- **Suresh Mahato**
+- **Sastika Regmi**
+- **Nischal Shrestha**
 
 
 # Smart PDF Q&A System
